@@ -1,3 +1,12 @@
+//   TOPOLOGIA DUMBBELL:
+//
+//   nodo0                    nodo1
+//
+//   nodo1 --- r0-----r1------nodo2
+//
+//   nodo2                    nodo0
+
+
 #include <string>
 #include <fstream>
 #include <stddef.h>                    
@@ -15,13 +24,42 @@ using namespace ns3;
  
 NS_LOG_COMPONENT_DEFINE ("TP2-Dumbbell-SOR2");
 
-//   TOPOLOGIA DUMBBELL:
-//
-//   nodo0                    nodo1
-//
-//   nodo1 --- r0-----r1------nodo2
-//
-//   nodo2                    nodo0
+//  "TIME VS CWND"
+static bool firstCwnd = true;
+static bool firstSshThr = true;
+static Ptr<OutputStreamWrapper> cWndStream;
+static Ptr<OutputStreamWrapper> ssThreshStream;
+static uint32_t cWndValue;
+static uint32_t ssThreshValue;
+
+static void
+CwndTracer (uint32_t oldval, uint32_t newval)
+{
+  if (firstCwnd)
+    {
+      *cWndStream->GetStream () << "0.0 " << oldval << std::endl;
+      firstCwnd = false;
+    }
+  *cWndStream->GetStream () << Simulator::Now ().GetSeconds () << " " << newval << std::endl;
+  cWndValue = newval;
+
+  if (!firstSshThr)
+    {
+      *ssThreshStream->GetStream () << Simulator::Now ().GetSeconds () << " " << ssThreshValue << std::endl;
+    }
+
+  std::cout << Simulator::Now ().GetSeconds () << "\t" << newval <<"\n";
+}
+
+static void
+TraceCwnd (std::string cwnd_tr_file_name)
+{
+  AsciiTraceHelper ascii;
+  cWndStream = ascii.CreateFileStream (cwnd_tr_file_name.c_str ());
+  Config::ConnectWithoutContext ("/NodeList/2/$ns3::TcpL4Protocol/SocketList/0/CongestionWindow", MakeCallback (&CwndTracer));
+}
+
+
 
 int main (int argc, char *argv[])
 {
@@ -32,6 +70,8 @@ int main (int argc, char *argv[])
   bool tracing = true;
 
   CommandLine cmd;
+  cmd.AddValue ("nLeaf",     "Numero de nodos de cliente y servidores", cantNodosCliente);
+  cmd.AddValue ("tracing", "Enable/Disable Tracing", tracing);
   cmd.Parse (argc, argv);
 
   //Facilita  la creacion de redes punto a punto.
@@ -112,7 +152,9 @@ int main (int argc, char *argv[])
   if (tracing)
   {
     redDumbbell.EnablePcapAll ("dumbbell-tp2", false);
+    Simulator::Schedule (Seconds (0.00001), &TraceCwnd, "dumbbell-tp2-cwnd.data");
   }
+
 
   NS_LOG_INFO ("Comienzo de Simulación.");
   Simulator::Run ();
