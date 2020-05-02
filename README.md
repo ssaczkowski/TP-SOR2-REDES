@@ -12,4 +12,12 @@
 5º Ejecutamos dentro de la carpeta de (4º) >> gnuplot configuracion.plt y buscamos el archivo "dumbbell-tp2-cwnd.png" para observar la ventana de congestión del nodo 2 para la interfaz 0.
 
 
+Para generar las métricas de CWND, RTT, RTO, SSTHRESH, cambiar en el código por el nodo (N) e interfaz (I) correspondiente:
+
+Config::ConnectWithoutContext ("/NodeList/(N)/$ns3::TcpL4Protocol/SocketList/(I)/[METRICA]", MakeCallback ([STRUCT_METRICA]));
+
+
+
+
+
 
