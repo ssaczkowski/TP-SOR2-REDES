@@ -26,8 +26,6 @@ NS_LOG_COMPONENT_DEFINE ("TP2-Dumbbell-SOR2");
 
 std::string prefix_file_name = "dumbbell-tp2";
 
-//  "TIME VS CWND" + UMBRAL
-
 static bool firstCwnd = true;
 static bool firstSshThr = true;
 static bool firstRtt = true;
