@@ -59,7 +59,31 @@ TraceCwnd (std::string cwnd_tr_file_name)
   Config::ConnectWithoutContext ("/NodeList/2/$ns3::TcpL4Protocol/SocketList/0/CongestionWindow", MakeCallback (&CwndTracer));
 }
 
+//  UMBRAL
+static void
+SsThreshTracer (uint32_t oldval, uint32_t newval)
+{
+  if (firstSshThr)
+    {
+      *ssThreshStream->GetStream () << "0.0 " << oldval << std::endl;
+      firstSshThr = false;
+    }
+  *ssThreshStream->GetStream () << Simulator::Now ().GetSeconds () << " " << newval << std::endl;
+  ssThreshValue = newval;
 
+  if (!firstCwnd)
+    {
+      *cWndStream->GetStream () << Simulator::Now ().GetSeconds () << " " << cWndValue << std::endl;
+    }
+}
+
+static void
+TraceSsThresh (std::string ssthresh_tr_file_name)
+{
+  AsciiTraceHelper ascii;
+  ssThreshStream = ascii.CreateFileStream (ssthresh_tr_file_name.c_str ());
+  Config::ConnectWithoutContext ("/NodeList/2/$ns3::TcpL4Protocol/SocketList/0/SlowStartThreshold", MakeCallback (&SsThreshTracer));
+}
 
 int main (int argc, char *argv[])
 {
@@ -153,6 +177,7 @@ int main (int argc, char *argv[])
   {
     redDumbbell.EnablePcapAll ("dumbbell-tp2", false);
     Simulator::Schedule (Seconds (0.00001), &TraceCwnd, "dumbbell-tp2-cwnd.data");
+    Simulator::Schedule (Seconds (0.00001), &TraceSsThresh, "dumbbell-tp2-ssth.data");  
   }
 
 
