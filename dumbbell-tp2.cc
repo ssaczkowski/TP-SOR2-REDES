@@ -24,13 +24,24 @@ using namespace ns3;
  
 NS_LOG_COMPONENT_DEFINE ("TP2-Dumbbell-SOR2");
 
-//  "TIME VS CWND"
+std::string prefix_file_name = "dumbbell-tp2";
+
+//  "TIME VS CWND" + UMBRAL
+
 static bool firstCwnd = true;
 static bool firstSshThr = true;
+static bool firstRtt = true;
+static bool firstRto = true;
+
 static Ptr<OutputStreamWrapper> cWndStream;
 static Ptr<OutputStreamWrapper> ssThreshStream;
+static Ptr<OutputStreamWrapper> rttStream;
+static Ptr<OutputStreamWrapper> rtoStream;
+static Ptr<OutputStreamWrapper> inFlightStream;
+
 static uint32_t cWndValue;
 static uint32_t ssThreshValue;
+
 
 static void
 CwndTracer (uint32_t oldval, uint32_t newval)
@@ -47,19 +58,8 @@ CwndTracer (uint32_t oldval, uint32_t newval)
     {
       *ssThreshStream->GetStream () << Simulator::Now ().GetSeconds () << " " << ssThreshValue << std::endl;
     }
-
-  std::cout << Simulator::Now ().GetSeconds () << "\t" << newval <<"\n";
 }
 
-static void
-TraceCwnd (std::string cwnd_tr_file_name)
-{
-  AsciiTraceHelper ascii;
-  cWndStream = ascii.CreateFileStream (cwnd_tr_file_name.c_str ());
-  Config::ConnectWithoutContext ("/NodeList/2/$ns3::TcpL4Protocol/SocketList/0/CongestionWindow", MakeCallback (&CwndTracer));
-}
-
-//  UMBRAL
 static void
 SsThreshTracer (uint32_t oldval, uint32_t newval)
 {
@@ -78,11 +78,72 @@ SsThreshTracer (uint32_t oldval, uint32_t newval)
 }
 
 static void
+RttTracer (Time oldval, Time newval)
+{
+  if (firstRtt)
+    {
+      *rttStream->GetStream () << "0.0 " << oldval.GetSeconds () << std::endl;
+      firstRtt = false;
+    }
+  *rttStream->GetStream () << Simulator::Now ().GetSeconds () << " " << newval.GetSeconds () << std::endl;
+}
+
+static void
+RtoTracer (Time oldval, Time newval)
+{
+  if (firstRto)
+    {
+      *rtoStream->GetStream () << "0.0 " << oldval.GetSeconds () << std::endl;
+      firstRto = false;
+    }
+  *rtoStream->GetStream () << Simulator::Now ().GetSeconds () << " " << newval.GetSeconds () << std::endl;
+}
+
+static void
+InFlightTracer (uint32_t old, uint32_t inFlight)
+{
+  NS_UNUSED (old);
+  *inFlightStream->GetStream () << Simulator::Now ().GetSeconds () << " " << inFlight << std::endl;
+}
+
+static void
+TraceCwnd (std::string cwnd_tr_file_name)
+{
+  AsciiTraceHelper ascii;
+  cWndStream = ascii.CreateFileStream (cwnd_tr_file_name.c_str ());
+  Config::ConnectWithoutContext ("/NodeList/2/$ns3::TcpL4Protocol/SocketList/0/CongestionWindow", MakeCallback (&CwndTracer));
+}
+
+static void
 TraceSsThresh (std::string ssthresh_tr_file_name)
 {
   AsciiTraceHelper ascii;
   ssThreshStream = ascii.CreateFileStream (ssthresh_tr_file_name.c_str ());
   Config::ConnectWithoutContext ("/NodeList/2/$ns3::TcpL4Protocol/SocketList/0/SlowStartThreshold", MakeCallback (&SsThreshTracer));
+}
+
+static void
+TraceRtt (std::string rtt_tr_file_name)
+{
+  AsciiTraceHelper ascii;
+  rttStream = ascii.CreateFileStream (rtt_tr_file_name.c_str ());
+  Config::ConnectWithoutContext ("/NodeList/2/$ns3::TcpL4Protocol/SocketList/0/RTT", MakeCallback (&RttTracer));
+}
+
+static void
+TraceRto (std::string rto_tr_file_name)
+{
+  AsciiTraceHelper ascii;
+  rtoStream = ascii.CreateFileStream (rto_tr_file_name.c_str ());
+  Config::ConnectWithoutContext ("/NodeList/2/$ns3::TcpL4Protocol/SocketList/0/RTO", MakeCallback (&RtoTracer));
+}
+
+static void
+TraceInFlight (std::string &in_flight_file_name)
+{
+  AsciiTraceHelper ascii;
+  inFlightStream = ascii.CreateFileStream (in_flight_file_name.c_str ());
+  Config::ConnectWithoutContext ("/NodeList/2/$ns3::TcpL4Protocol/SocketList/0/BytesInFlight", MakeCallback (&InFlightTracer));
 }
 
 int main (int argc, char *argv[])
@@ -173,12 +234,24 @@ int main (int argc, char *argv[])
   servidorApps.Stop (Seconds (100.0));
 
   //Generacion de pcap's. - Captura de los paquetes de cada enlace (aristas).
-  if (tracing)
-  {
-    redDumbbell.EnablePcapAll ("dumbbell-tp2", false);
-    Simulator::Schedule (Seconds (0.00001), &TraceCwnd, "dumbbell-tp2-cwnd.data");
-    Simulator::Schedule (Seconds (0.00001), &TraceSsThresh, "dumbbell-tp2-ssth.data");  
-  }
+    if (tracing)
+    {
+      redDumbbell.EnablePcapAll ("dumbbell-tp2", false);
+
+      std::ofstream ascii;
+      Ptr<OutputStreamWrapper> ascii_wrap;
+      ascii.open ((prefix_file_name + "-ascii").c_str ());
+      ascii_wrap = new OutputStreamWrapper ((prefix_file_name + "-ascii").c_str (),
+                                            std::ios::out);
+      stack.EnableAsciiIpv4All (ascii_wrap);
+
+      Simulator::Schedule (Seconds (0.00001), &TraceCwnd, prefix_file_name + "-cwnd.data");
+      Simulator::Schedule (Seconds (0.00001), &TraceSsThresh, prefix_file_name + "-ssth.data");
+      Simulator::Schedule (Seconds (0.00001), &TraceRtt, prefix_file_name + "-rtt.data");
+      Simulator::Schedule (Seconds (0.00001), &TraceRto, prefix_file_name + "-rto.data");
+      Simulator::Schedule (Seconds (0.00001), &TraceInFlight, prefix_file_name + "-inflight.data");
+   
+    }
 
 
   NS_LOG_INFO ("Comienzo de Simulación.");
