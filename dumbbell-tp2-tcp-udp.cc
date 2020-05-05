@@ -333,16 +333,16 @@ int main (int argc, char *argv[])
   servidorApps.Add (servidor2.Install (dumbbell.GetRight (nodo2)));
   //--------------------------------------------------------------------------------------------------------------------------
   //ON-OFF Application UDP
-  //OnOffHelper clienteHelper3 ("ns3::UdpSocketFactory", Address ());
-  //clienteHelper3.SetAttribute ("OnTime", StringValue ("ns3::ConstantRandomVariable[Constant=1000.0]"));
-  //clienteHelper3.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
+  OnOffHelper clienteHelper3 ("ns3::UdpSocketFactory", Address ());
+  clienteHelper3.SetAttribute ("OnTime", StringValue ("ns3::ConstantRandomVariable[Constant=1000.0]"));
+  clienteHelper3.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
 
-  //AddressValue remoteAddress3 (InetSocketAddress (dumbbell.GetRightIpv4Address (nodo0), puerto));
-  //clienteHelper3.SetAttribute ("Remote", remoteAddress3);
-  //clienteApps.Add (clienteHelper3.Install (dumbbell.GetLeft (nodo2)));
+  AddressValue remoteAddress3 (InetSocketAddress (dumbbell.GetRightIpv4Address (nodo0), puerto));
+  clienteHelper3.SetAttribute ("Remote", remoteAddress3);
+  clienteApps.Add (clienteHelper3.Install (dumbbell.GetLeft (nodo2)));
 
-  //PacketSinkHelper servidor3 ("ns3::TcpSocketFactory",InetSocketAddress (dumbbell.GetRightIpv4Address (nodo0), puerto));
-  //servidorApps.Add (servidor3.Install (dumbbell.GetRight (nodo0)));
+  PacketSinkHelper servidor3 ("ns3::TcpSocketFactory",InetSocketAddress (dumbbell.GetRightIpv4Address (nodo0), puerto));
+  servidorApps.Add (servidor3.Install (dumbbell.GetRight (nodo0)));
   //--------------------------------------------------------------------------------------------------------------------------
   //Comienzo y parada de paquetes enviados (Clientes(emisores) -> Servidores(receptores)).
   clienteApps.Start (Seconds (0.0));
