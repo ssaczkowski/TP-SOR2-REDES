@@ -133,7 +133,7 @@ int main (int argc, char *argv[])
       stack.EnableAsciiIpv4All (ascii_wrap);
 
       Simulator::Schedule (Seconds (0.001), &TraceCwnd20, prefix_file_name + "-20-cwnd.data");
-      Simulator::Schedule (Seconds (0.00), &TraceSsThresh20, prefix_file_name + "-20-ssth.data");
+      Simulator::Schedule (Seconds (0.001), &TraceSsThresh20, prefix_file_name + "-20-ssth.data");
       Simulator::Schedule (Seconds (0.001), &TraceRtt20, prefix_file_name + "-20-rtt.data");
       Simulator::Schedule (Seconds (0.001), &TraceRto20, prefix_file_name + "-20-rto.data");
       Simulator::Schedule (Seconds (0.001), &TraceInFlight20, prefix_file_name + "-20-inflight.data");
